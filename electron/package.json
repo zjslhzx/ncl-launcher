@@ -1,0 +1,27 @@
+{
+  "name": "df-range-3d",
+  "productName": "三角洲靶场",
+  "version": "1.0.0",
+  "description": "三角洲行动改枪靶场复刻（独立窗口版，不依赖系统浏览器）",
+  "main": "main.js",
+  "build": {
+    "appId": "com.dfrange.3d",
+    "productName": "三角洲靶场",
+    "files": [
+      "main.js",
+      "app/**"
+    ],
+    "win": {
+      "target": [
+        "portable"
+      ]
+    },
+    "portable": {
+      "artifactName": "三角洲靶场.exe"
+    }
+  },
+  "devDependencies": {
+    "electron": "^33.4.11",
+    "electron-builder": "^25.1.8"
+  }
+}

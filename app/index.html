@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>三角洲行动 · 改枪靶场复刻</title>
+<style>
+:root{
+  --bg0:#0b0e11;--bg1:#12161b;--bg2:#181d24;--bg3:#1f2630;--line:#2a3340;
+  --tx:#d8dee6;--tx2:#8b96a5;--tx3:#5c6774;
+  --ac:#ff9a1f;--ac2:#ffb95c;--grn:#54d98c;--red:#ff5d5d;--blu:#4da3ff;--pur:#b98cff;
+  --mono:'Consolas','Courier New',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;user-select:none}
+html,body{height:100%}
+body{background:var(--bg0);color:var(--tx);font:14px/1.5 'Microsoft YaHei',system-ui,sans-serif;overflow:hidden}
+#app{display:flex;flex-direction:column;height:100vh}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px}
+::-webkit-scrollbar-track{background:transparent}
+
+/* ===== 顶栏 ===== */
+#topbar{display:flex;align-items:center;gap:16px;height:52px;padding:0 16px;background:linear-gradient(180deg,#141920,#0e1216);border-bottom:1px solid var(--line);flex-shrink:0}
+.logo{display:flex;align-items:baseline;gap:8px}
+.logo b{font-size:17px;letter-spacing:2px;color:#fff}
+.logo b i{color:var(--ac);font-style:normal}
+.logo span{font-size:11px;color:var(--tx3)}
+.tabs{display:flex;gap:4px;margin-left:20px}
+.tab{padding:7px 22px;background:transparent;border:1px solid transparent;color:var(--tx2);cursor:pointer;font-size:14px;border-radius:3px;transition:.15s}
+.tab:hover{color:var(--tx)}
+.tab.on{color:var(--ac);border-color:var(--ac);background:rgba(255,154,31,.08);font-weight:bold}
+.topright{margin-left:auto;display:flex;gap:10px;align-items:center;font-size:12px;color:var(--tx3)}
+.topright .dot{width:7px;height:7px;border-radius:50%;background:var(--grn);display:inline-block;margin-right:5px}
+
+/* ===== 主区 ===== */
+.page{display:none;flex:1;min-height:0}
+.page.on{display:flex}
+
+/* ===== 改枪工坊 ===== */
+#pg-gun{flex-direction:row}
+.guncol{border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+#gun-list{width:230px;background:var(--bg1)}
+#gun-list .hd{padding:10px 12px;font-size:12px;color:var(--tx2);border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+#gun-list .cats{display:flex;flex-wrap:wrap;gap:4px;padding:8px 10px;border-bottom:1px solid var(--line)}
+.cat{font-size:11px;padding:3px 8px;border:1px solid var(--line);border-radius:10px;color:var(--tx2);cursor:pointer}
+.cat.on{color:var(--ac);border-color:var(--ac)}
+#gunlist-body{flex:1;overflow-y:auto;padding:6px}
+.gunrow{padding:8px 10px;border-radius:4px;cursor:pointer;border:1px solid transparent;display:flex;justify-content:space-between;align-items:center}
+.gunrow:hover{background:var(--bg3)}
+.gunrow.on{background:rgba(255,154,31,.1);border-color:rgba(255,154,31,.5)}
+.gunrow .nm{font-size:13px}
+.gunrow .sub{font-size:10px;color:var(--tx3)}
+.gunrow .cls{font-size:10px;color:var(--tx3)}
+
+#gun-mid{flex:1;min-width:0;background:radial-gradient(1200px 500px at 50% -100px,#18202b,var(--bg0))}
+#gun-mid .inner{padding:14px 18px;height:100%;display:flex;flex-direction:column;gap:10px;min-height:0}
+.wtitle{display:flex;align-items:baseline;gap:12px}
+.wtitle h2{font-size:22px;letter-spacing:1px}
+.wtitle .tg{font-size:11px;color:var(--tx3)}
+.wtitle .price{margin-left:auto;font-size:16px;color:var(--ac);font-family:var(--mono)}
+.slotwrap{background:var(--bg1);border:1px solid var(--line);border-radius:6px;padding:12px}
+.slots{display:grid;grid-template-columns:repeat(8,1fr);gap:8px}
+.slot{background:var(--bg2);border:1px solid var(--line);border-radius:5px;padding:8px 6px;text-align:center;cursor:pointer;transition:.12s;position:relative}
+.slot:hover{border-color:var(--tx3)}
+.slot.on{border-color:var(--ac);background:rgba(255,154,31,.1)}
+.slot .sn{font-size:11px;color:var(--tx2)}
+.slot .sv{font-size:11px;color:var(--tx);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.slot .sv.empty{color:var(--tx3)}
+.slot .xp{position:absolute;top:-6px;right:-6px;background:var(--red);color:#fff;font-size:9px;border-radius:8px;padding:0 4px}
+.statwrap{flex:1;min-height:0;display:flex;gap:10px}
+.statpanel{flex:1;background:var(--bg1);border:1px solid var(--line);border-radius:6px;padding:12px 16px;overflow-y:auto}
+.statpanel h3,.attpanel h3{font-size:12px;color:var(--tx2);margin-bottom:10px;letter-spacing:1px}
+.srow{display:grid;grid-template-columns:76px 1fr 64px 56px;gap:8px;align-items:center;padding:4px 0;font-size:12px}
+.srow .lb{color:var(--tx2)}
+.sbar{height:6px;background:var(--bg3);border-radius:3px;position:relative;overflow:visible}
+.sbar i{position:absolute;left:0;top:0;bottom:0;background:var(--blu);border-radius:3px;transition:width .25s}
+.srow .vl{font-family:var(--mono);text-align:right;color:var(--tx)}
+.srow .df{font-family:var(--mono);text-align:right;font-size:11px}
+.srow .df.up{color:var(--grn)}
+.srow .df.dn{color:var(--red)}
+.attpanel{width:340px;background:var(--bg1);border:1px solid var(--line);border-radius:6px;padding:12px;display:flex;flex-direction:column;min-height:0}
+#att-title{font-size:14px;color:#fff;margin-bottom:2px}
+#att-cur{font-size:11px;color:var(--tx3);margin-bottom:8px}
+#att-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding-right:4px}
+.attitem{background:var(--bg2);border:1px solid var(--line);border-radius:5px;padding:8px 10px;cursor:pointer}
+.attitem:hover{border-color:var(--tx3)}
+.attitem.on{border-color:var(--grn);background:rgba(84,217,140,.08)}
+.attitem.locked{opacity:.45;cursor:not-allowed}
+.attitem .ar{display:flex;justify-content:space-between;align-items:center}
+.attitem .an{font-size:13px}
+.attitem .ap{font-size:12px;color:var(--ac);font-family:var(--mono)}
+.attitem .amods{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}
+.mod{font-size:10px;padding:1px 6px;border-radius:3px;background:var(--bg3);font-family:var(--mono)}
+.mod.up{color:var(--grn)}
+.mod.dn{color:var(--red)}
+.btnrow{display:flex;gap:8px;margin-top:10px}
+.btn{flex:1;padding:8px 0;text-align:center;border:1px solid var(--line);border-radius:4px;cursor:pointer;font-size:12px;color:var(--tx2);background:var(--bg2)}
+.btn:hover{color:var(--tx);border-color:var(--tx3)}
+.btn.warn{color:var(--red)}
+.btn.ac{color:var(--ac);border-color:var(--ac)}
+#preset-area{margin-top:10px;border-top:1px solid var(--line);padding-top:8px}
+#preset-area h4{font-size:11px;color:var(--tx2);margin-bottom:6px}
+.prow{display:flex;gap:6px;margin-bottom:6px}
+#preset-name{flex:1;background:var(--bg2);border:1px solid var(--line);color:var(--tx);padding:5px 8px;border-radius:3px;font-size:12px;outline:none}
+#preset-list{max-height:120px;overflow-y:auto}
+.pitem{display:flex;justify-content:space-between;padding:5px 8px;font-size:12px;border-radius:3px;cursor:pointer}
+.pitem:hover{background:var(--bg3)}
+.pitem .del{color:var(--tx3)}
+.pitem .del:hover{color:var(--red)}
+
+/* ===== 靶场 3D ===== */
+#pg-range{flex-direction:row}
+#range-side{width:272px;background:var(--bg1);border-right:1px solid var(--line);display:flex;flex-direction:column;overflow-y:auto;padding:12px;gap:12px;flex-shrink:0}
+.rsec{background:var(--bg2);border:1px solid var(--line);border-radius:6px;padding:10px}
+.rsec h4{font-size:12px;color:var(--tx2);margin-bottom:8px;letter-spacing:1px}
+.rrow{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;font-size:12px}
+.rrow .rl{color:var(--tx2)}
+select,input[type=number]{background:var(--bg3);border:1px solid var(--line);color:var(--tx);border-radius:3px;padding:3px 6px;font-size:12px;outline:none}
+input[type=range]{width:110px;accent-color:var(--ac)}
+.distbtns{display:flex;gap:4px;flex-wrap:wrap}
+.dbtn{flex:1;min-width:42px;text-align:center;padding:5px 0;border:1px solid var(--line);border-radius:3px;font-size:12px;cursor:pointer;color:var(--tx2)}
+.dbtn.on{color:var(--ac);border-color:var(--ac);background:rgba(255,154,31,.08)}
+#range-main{flex:1;position:relative;min-width:0;background:#000;overflow:hidden}
+#gl{position:absolute;inset:0;width:100%;height:100%;display:block}
+#gl-lock{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(5,8,12,.55);color:var(--tx2);font-size:15px;letter-spacing:2px;z-index:5}
+#gl-lock.hide{display:none}
+#range-hud{position:absolute;top:10px;left:12px;right:12px;display:flex;gap:8px;pointer-events:none;flex-wrap:wrap;z-index:4}
+.hudchip{background:rgba(10,14,18,.72);border:1px solid var(--line);border-radius:4px;padding:5px 10px;font-size:12px;font-family:var(--mono)}
+.hudchip b{color:var(--ac)}
+#hud-hpwrap{position:absolute;top:52px;left:50%;transform:translateX(-50%);width:260px;z-index:4;pointer-events:none;text-align:center}
+#hud-hpbar{height:6px;background:rgba(255,255,255,.12);border-radius:3px;overflow:hidden;margin-top:3px}
+#hud-hpbar i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#ff5d5d,#ff9a1f);transition:width .15s}
+#hud-hptext{font-size:11px;color:var(--tx2);font-family:var(--mono)}
+#crosshair{position:absolute;left:50%;top:50%;width:0;height:0;z-index:4;pointer-events:none}
+#crosshair span{position:absolute;background:rgba(84,217,140,.92);box-shadow:0 0 2px #000}
+#hitmarker{position:absolute;left:50%;top:50%;z-index:4;pointer-events:none;opacity:0;font:700 22px var(--mono);color:#ffd28a;transform:translate(-50%,-50%)}
+#hitmarker.show{opacity:1;transition:none}
+#hud-msg{position:absolute;left:50%;top:62%;transform:translateX(-50%);z-index:4;font:700 17px 'Microsoft YaHei';color:var(--ac);text-shadow:0 1px 4px #000;pointer-events:none}
+#hud-ammo{position:absolute;right:22px;bottom:20px;z-index:4;font:700 30px var(--mono);color:#fff;text-shadow:0 1px 4px #000;pointer-events:none}
+#hud-ammo small{font-size:14px;color:var(--tx2)}
+#dmg-log{position:absolute;top:90px;right:16px;width:210px;max-height:42%;overflow:hidden;pointer-events:none;display:flex;flex-direction:column;gap:4px;align-items:flex-end;z-index:4}
+.dmgpop{background:rgba(10,14,18,.8);border-left:2px solid var(--ac);padding:3px 8px;font-size:12px;font-family:var(--mono);animation:fadeout 2.5s forwards}
+.dmgpop.kill{border-color:var(--red);color:var(--red)}
+@keyframes fadeout{0%{opacity:1}70%{opacity:1}100%{opacity:0}}
+#range-help{position:absolute;bottom:12px;left:14px;right:14px;font-size:11px;color:var(--tx3);pointer-events:none;text-shadow:0 1px 2px #000;z-index:4}
+.btnrow{display:flex;gap:8px}
+.btn{flex:1;padding:8px 0;text-align:center;border:1px solid var(--line);border-radius:4px;cursor:pointer;font-size:12px;color:var(--tx2);background:var(--bg2)}
+.btn:hover{color:var(--tx);border-color:var(--tx3)}
+.btn.warn{color:var(--red)}
+.btn.ac{color:var(--ac);border-color:var(--ac)}
+/* ===== 弹道对话框 ===== */
+#bal-modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:50}
+#bal-modal.on{display:flex}
+#bal-box{background:var(--bg1);border:1px solid var(--line);border-radius:8px;padding:16px;width:560px}
+#bal-box h3{margin-bottom:10px;font-size:15px}
+#bal-box table{width:100%;border-collapse:collapse;font-size:12px;font-family:var(--mono)}
+#bal-box th,#bal-box td{border:1px solid var(--line);padding:4px 8px;text-align:center}
+#bal-box th{background:var(--bg2);color:var(--tx2);font-weight:normal}
+#bal-close{margin-top:12px;width:100%}
+
+/* ===== 键位设置（模仿游戏设置-键鼠 界面） ===== */
+#pg-keys{flex-direction:row}
+#kb-side{width:190px;background:var(--bg1);border-right:1px solid var(--line);padding:12px 8px;display:flex;flex-direction:column;gap:4px;flex-shrink:0}
+.kb-nav{padding:10px 14px;border-radius:4px;cursor:pointer;color:var(--tx2);font-size:13px;border:1px solid transparent}
+.kb-nav:hover{background:var(--bg3);color:var(--tx)}
+.kb-nav.on{color:var(--ac);border-color:rgba(255,154,31,.5);background:rgba(255,154,31,.08)}
+#kb-main{flex:1;min-width:0;display:flex;flex-direction:column;padding:14px 18px;overflow:hidden}
+#kb-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+#kb-cat-title{font-size:18px;font-weight:bold;margin-right:auto}
+#kb-head .btn{flex:0 0 auto;padding:6px 14px}
+#kb-rows{flex:1;overflow-y:auto;background:var(--bg1);border:1px solid var(--line);border-radius:6px}
+.kbrow{display:flex;align-items:center;gap:8px;padding:10px 16px;border-bottom:1px solid var(--line)}
+.kbrow:hover{background:var(--bg2)}
+.kbrow .kn{font-size:13px}
+.kbrow .ktag{font-size:10px;color:var(--ac);border:1px solid rgba(255,154,31,.4);border-radius:3px;padding:0 5px;flex-shrink:0}
+.kbrow .kcf{font-size:10px;color:var(--red)}
+.kbrow .ksrc{margin-left:auto;font-size:10px;color:var(--tx3)}
+.kbrow .kk{min-width:132px;text-align:center;padding:6px 12px;border:1px solid var(--line);border-radius:4px;background:var(--bg2);cursor:pointer;font-size:12px;font-family:var(--mono);color:var(--tx)}
+.kbrow .kk:hover{border-color:var(--tx3)}
+.kbrow.listen .kk{border-color:var(--ac);color:var(--ac);animation:kbPulse 1s infinite}
+.kbrow.conflict .kk{border-color:var(--red);color:var(--red)}
+@keyframes kbPulse{50%{opacity:.45}}
+#kb-note{margin-top:8px;font-size:11px;color:var(--tx3);line-height:1.7}
+
+/* ===== 说明页 ===== */
+#pg-info{padding:24px;overflow-y:auto}
+#pg-info.on{display:block}
+#pg-info .card{max-width:860px;margin:0 auto;background:var(--bg1);border:1px solid var(--line);border-radius:8px;padding:20px 24px;margin-bottom:16px}
+#pg-info h2{font-size:16px;margin-bottom:10px;color:var(--ac)}
+#pg-info h3{font-size:13px;margin:12px 0 6px;color:var(--tx2)}
+#pg-info p,#pg-info li{font-size:13px;color:var(--tx2);line-height:1.8}
+#pg-info code{background:var(--bg3);padding:1px 6px;border-radius:3px;font-family:var(--mono);font-size:12px;color:var(--grn)}
+#pg-info table{width:100%;border-collapse:collapse;font-size:12px;margin:8px 0}
+#pg-info th,#pg-info td{border:1px solid var(--line);padding:5px 10px;text-align:left}
+#pg-info th{background:var(--bg2);color:var(--tx2)}
+.kv{font-family:var(--mono);color:var(--grn);font-size:12px}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="topbar">
+    <div class="logo"><b>三角洲<i>行动</i></b><span>改枪靶场 · 本地复刻版</span></div>
+    <div class="tabs">
+      <button class="tab on" data-page="pg-gun">改枪工坊</button>
+      <button class="tab" data-page="pg-range">靶场测试</button>
+      <button class="tab" data-page="pg-keys">键位设置</button>
+      <button class="tab" data-page="pg-info">提取资料说明</button>
+    </div>
+    <div class="topright"><span><span class="dot"></span>离线运行 · 数据本地保存</span></div>
+  </div>
+
+  <!-- ============ 改枪 ============ -->
+  <div class="page on" id="pg-gun">
+    <div class="guncol" id="gun-list">
+      <div class="hd"><span>武器库</span><span id="gun-count"></span></div>
+      <div class="cats" id="gun-cats"></div>
+      <div id="gunlist-body"></div>
+    </div>
+    <div id="gun-mid">
+      <div class="inner">
+        <div class="wtitle">
+          <h2 id="w-name"></h2>
+          <span class="tg" id="w-class"></span>
+          <span class="price" id="w-price"></span>
+        </div>
+        <div class="slotwrap">
+          <div class="slots" id="slots"></div>
+        </div>
+        <div class="statwrap">
+          <div class="statpanel">
+            <h3>武器属性 <span style="color:var(--tx3);font-size:11px">（白条=改装后 · 蓝条=原厂 · 右侧=相对变化）</span></h3>
+            <div id="stat-rows"></div>
+          </div>
+          <div class="attpanel">
+            <div id="att-title">选择槽位</div>
+            <div id="att-cur">在上方点击一个改装槽位以查看可用配件</div>
+            <div id="att-list"></div>
+            <div class="btnrow">
+              <div class="btn" id="btn-clear">清空配件</div>
+              <div class="btn" id="btn-torange">去靶场测试 →</div>
+            </div>
+            <div id="preset-area">
+              <h4>改装方案（本地保存）</h4>
+              <div class="prow"><input id="preset-name" placeholder="方案名称，如：M4A1 满改压枪"><div class="btn" id="btn-save" style="flex:0 0 84px">保存方案</div></div>
+              <div id="preset-list"></div>
+              <div class="prow"><div class="btn" id="btn-export">导出分享码</div><div class="btn" id="btn-import">导入分享码</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 靶场 3D ============ -->
+  <div class="page" id="pg-range">
+    <div id="range-side">
+      <div class="rsec">
+        <h4>靶位设置（对应游戏靶场 RT1–RT5）</h4>
+        <div class="distbtns" id="dist-btns"></div>
+        <div class="rrow" style="margin-top:8px"><span class="rl">距离</span><span id="dist-val" class="kv" style="font-family:var(--mono);color:var(--grn)"></span></div>
+        <div class="rrow"><span class="rl">自定义距离 (m)</span><input type="number" id="dist-custom" min="1" max="230" value="25" style="width:70px"></div>
+      </div>
+      <div class="rsec">
+        <h4>假人配置（靶场目标）</h4>
+        <div class="rrow"><span class="rl">生命值</span><span id="hp-val" style="font-family:var(--mono);color:var(--grn)">100</span></div>
+        <input type="range" id="hp-range" min="10" max="300" step="10" value="100" style="width:100%">
+        <div class="rrow" style="margin-top:6px"><span class="rl">头盔等级</span><select id="helmet-lv"></select></div>
+        <div class="rrow"><span class="rl">护甲等级</span><select id="armor-lv"></select></div>
+        <div class="rrow" style="margin-top:6px"><span class="rl">移动靶</span><input type="checkbox" id="move-target"></div>
+        <div class="rrow"><span class="rl">伤害数字提示</span><input type="checkbox" id="dmg-hint" checked></div>
+      </div>
+      <div class="rsec">
+        <h4>当前武器</h4>
+        <div class="rrow"><span class="rl" id="r-wname" style="color:var(--tx)">-</span></div>
+        <div class="rrow"><span class="rl">射击模式</span>
+          <select id="fire-mode"><option value="auto">全自动</option><option value="single">单发</option></select>
+        </div>
+        <div class="rrow"><span class="rl">鼠标灵敏度</span><input type="range" id="sens" min="4" max="30" value="14" style="width:90px"></div>
+        <div class="rrow"><span class="rl">枪声模拟</span><input type="checkbox" id="sfx-on" checked></div>
+      </div>
+      <div class="rsec">
+        <h4>实时统计</h4>
+        <div class="rrow"><span class="rl">胸部TTK</span><span id="r-ttk" style="font-family:var(--mono);color:var(--grn)">-</span></div>
+        <div class="rrow"><span class="rl">当前距离DPS</span><span id="r-dps" style="font-family:var(--mono);color:var(--grn)">-</span></div>
+        <div class="rrow"><span class="rl">子弹飞行时间</span><span id="r-tof" style="font-family:var(--mono);color:var(--grn)">-</span></div>
+        <div class="rrow"><span class="rl">弹道下坠</span><span id="r-drop" style="font-family:var(--mono);color:var(--grn)">-</span></div>
+        <div class="rrow"><span class="rl">已发射 / 命中</span><span id="r-shots" style="font-family:var(--mono);color:var(--grn)">0 / 0</span></div>
+      </div>
+      <div class="btnrow">
+        <div class="btn" id="btn-reset-target">重置假人 (R)</div>
+        <div class="btn" id="btn-clear-holes">清除弹孔</div>
+      </div>
+      <div class="btnrow">
+        <div class="btn ac" id="btn-ballistic">弹道数据表</div>
+        <div class="btn" id="btn-backgun">← 返回改枪</div>
+      </div>
+    </div>
+    <div id="range-main">
+      <canvas id="gl"></canvas>
+      <div id="gl-lock">点击进入靶场 · WASD 移动 / 鼠标瞄准</div>
+      <div id="range-hud">
+        <div class="hudchip">距离 <b id="hud-dist">25m</b></div>
+        <div class="hudchip">护甲 <b id="hud-armor">无</b> · 头盔 <b id="hud-helmet">无</b></div>
+        <div class="hudchip">模式 <b id="hud-fmode">全自动</b></div>
+        <div class="hudchip">开镜 <b id="hud-ads">腰射</b></div>
+        <div class="hudchip">命中 <b id="r-shots2">0 / 0</b></div>
+      </div>
+      <div id="hud-hpwrap"><div id="hud-hptext">假人 100 / 100</div><div id="hud-hpbar"><i></i></div></div>
+      <div id="crosshair"></div>
+      <div id="hitmarker">✕</div>
+      <div id="hud-msg"></div>
+      <div id="hud-ammo">30 <small>/ 30</small></div>
+      <div id="dmg-log"></div>
+      <div id="range-help">左键射击 · 右键按住开镜 · WASD 移动 · R 换弹/重置假人 · ESC 释放鼠标 · 滚轮切换靶位</div>
+    </div>
+  </div>
+
+  <!-- ============ 键位设置：默认键位提取自游戏 Input.ini ============ -->
+  <div class="page" id="pg-keys">
+    <div id="kb-side">
+      <div class="kb-nav on" data-cat="move">移动</div>
+      <div class="kb-nav" data-cat="combat">战斗</div>
+      <div class="kb-nav" data-cat="weapon">武器</div>
+      <div class="kb-nav" data-cat="range">靶场</div>
+    </div>
+    <div id="kb-main">
+      <div id="kb-head">
+        <div id="kb-cat-title">移动键位</div>
+        <div class="btn" id="kb-reset-cat">恢复本类默认</div>
+        <div class="btn warn" id="kb-reset-all">全部恢复默认</div>
+      </div>
+      <div id="kb-rows"></div>
+      <div id="kb-note">
+        默认键位提取自游戏目录 Input.ini（[/Script/Engine.InputSettings] ActionMappings 与 DFHDKeySettingManager 键鼠配置）。<br>
+        点击键位框 → 按下 键盘按键 / 鼠标按键 / 滚轮 即可设为新键位；Backspace 或 Delete 清除绑定；ESC 取消修改。标有「靶场」的键位在本靶场复刻中实际生效，其余键位与游戏一致并已保存，供完整键位表参考。
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 说明 ============ -->
+  <div class="page" id="pg-info">
+    <div class="card">
+      <h2>逆向提取说明</h2>
+      <p>本应用基于对 <code>D:\Delta Force</code> 安装目录的只读逆向分析构建，全程未修改、删除或写入任何原始游戏文件。以下为识别与提取结果：</p>
+      <h3>1. 文件识别结果</h3>
+      <table>
+        <tr><th>位置</th><th>内容</th><th>结论</th></tr>
+        <tr><td>DeltaForce\Content\Paks（257 个）+ PackContent\Paks + Saved\Dolphin\Paks</td><td>UE pak v11 资源包（含武器数据表/模型/音效）</td><td class="kv">索引 AES 加密（encrypted index, 自定义腾讯封装），无密钥不可解包</td></tr>
+        <tr><td>DeltaForce\Saved\LuaSource（157 个）</td><td>游戏 Lua 业务脚本（改枪模块 gunsmithmodule、装配界面 armedforcemodule、安全屋 irissafehouse 等）</td><td class="kv">已提取并解码文件名（字节异或 0xDF）</td></tr>
+        <tr><td>Saved\Config\WindowsClient\LuaConfig.ini</td><td>靶场目标真实配置（RT1–RT5 距离/血量/头盔/护甲/伤害提示）</td><td class="kv">已提取，作为本应用靶场默认值</td></tr>
+        <tr><td>DeltaForce\Binaries\Win64</td><td>游戏主程序与反作弊 ACE 模块</td><td class="kv">仅识别，未做内存/运行时分析</td></tr>
+      </table>
+      <h3>2. 关键证据（提取自游戏文件）</h3>
+      <p>· 靶场目标键值（LuaConfig.ini，三位模式 MP / SOL / Blast 各一套）：<br>
+      <span class="kv">Range_SOL_RT1DISTANCE=0.025 → RT5，RT*_HP=100.0，RT4HELMET=11010005003，RT4ARMOR=11050005003，RT5HELMET=11010005012，RT5ARMOR=11050005002，Range_SOL_DMGHint=True</span></p>
+      <p>· 改枪系统模块（LuaSource 解码命名）：<br>
+      <span class="kv">dfm.business.module.gunsmithmodule.gunsmithmodule.lua<br>dfm.business.module.armedforcemodule.ui.selection.assemblyselectionmain.lua（装配界面）<br>dfm.business.datastruct.itemstruct.itembase.lua（物品/配件数据结构）</span></p>
+      <p>· 字节码特征：签名 <code>1B 4C 75 61 53</code>（Lua 5.3 修改版），变长字符串编码、2 字节 upvalue、操作码表混淆，已自写解析器完成结构解析（见 提取资料/Lua脚本_解码命名 与 Lua字符串清单）。</p>
+      <h3>3. 数据口径说明</h3>
+      <p>武器数值（伤害/射速/初速等）与配件数值属于加密资源包内的策划表，无法从本机文件直接解出；本应用数值按公开游戏资料整理标定，属性计算与靶场交互逻辑（部位倍率、护甲减伤、距离衰减、弹速飞行时间、后坐力图形）按游戏实测规律复现，用于本地训练/演示。</p>
+    </div>
+  </div>
+</div>
+
+<!-- 弹道表 -->
+<div id="bal-modal"><div id="bal-box">
+  <h3>弹道数据表 · <span id="bal-wname"></span></h3>
+  <div style="max-height:50vh;overflow-y:auto"><table id="bal-table"></table></div>
+  <div class="btn warn" id="bal-close">关闭</div>
+</div></div>
+
+<script>
+"use strict";
+/* =========================================================
+   三角洲行动 · 改枪靶场复刻（单文件离线应用）
+   靶场默认配置提取自游戏 LuaConfig.ini（Range_*_RT1..RT5）
+   ========================================================= */
+
+/* ---------- 武器基础数据 ---------- */
+/* 伤害=胸部单发基准伤害; rpm=射速; v0=初速m/s; eff=有效射程m;
+   rv=垂直后坐控制(越高越稳); rh=水平后坐控制; erg=人机工效; ads=开镜时间s;
+   stab=稳定性; mag=弹匣; mob=机动; pen=弹药穿透等级; hd=头部倍率 */
+const WEAPONS = [
+ {id:"m4a1",  name:"M4A1",     cls:"突击步枪", price:42000, dmg:41, rpm:750, v0:880, eff:45, rv:52, rh:55, erg:52, ads:0.28, stab:55, mag:30, mob:60, pen:3, hd:2.35, pellets:1, ammo:"5.56"},
+ {id:"car15", name:"CAR-15",   cls:"突击步枪", price:39000, dmg:42, rpm:800, v0:900, eff:42, rv:48, rh:52, erg:50, ads:0.29, stab:52, mag:30, mob:60, pen:3, hd:2.35, pellets:1, ammo:"5.56"},
+ {id:"ak12",  name:"AK-12",    cls:"突击步枪", price:48000, dmg:46, rpm:700, v0:870, eff:48, rv:46, rh:50, erg:44, ads:0.31, stab:50, mag:30, mob:56, pen:4, hd:2.40, pellets:1, ammo:"5.45"},
+ {id:"akm",   name:"AKM",      cls:"突击步枪", price:31000, dmg:49, rpm:600, v0:715, eff:42, rv:40, rh:42, erg:36, ads:0.34, stab:42, mag:30, mob:52, pen:4, hd:2.45, pellets:1, ammo:"7.62"},
+ {id:"scarh", name:"SCAR-H",   cls:"突击步枪", price:56000, dmg:51, rpm:600, v0:790, eff:55, rv:42, rh:48, erg:40, ads:0.33, stab:54, mag:20, mob:50, pen:5, hd:2.50, pellets:1, ammo:"7.62H"},
+ {id:"aug",   name:"AUG",      cls:"突击步枪", price:51000, dmg:42, rpm:750, v0:900, eff:46, rv:50, rh:56, erg:46, ads:0.27, stab:56, mag:30, mob:58, pen:3, hd:2.35, pellets:1, ammo:"5.56"},
+ {id:"asval", name:"AS Val",   cls:"突击步枪", price:62000, dmg:44, rpm:900, v0:320, eff:30, rv:44, rh:50, erg:42, ads:0.30, stab:48, mag:20, mob:58, pen:4, hd:2.40, pellets:1, ammo:"9x39", note:"亚音速微声"},
+ {id:"sr3m",  name:"SR-3M",    cls:"突击步枪", price:57000, dmg:41, rpm:900, v0:320, eff:28, rv:46, rh:52, erg:48, ads:0.28, stab:46, mag:30, mob:60, pen:3, hd:2.35, pellets:1, ammo:"9x39", note:"亚音速微声"},
+ {id:"smg45", name:"SMG-45",   cls:"冲锋枪",   price:28000, dmg:33, rpm:800, v0:400, eff:28, rv:50, rh:58, erg:56, ads:0.24, stab:58, mag:25, mob:66, pen:2, hd:2.20, pellets:1, ammo:".45"},
+ {id:"vector",name:"Vector",   cls:"冲锋枪",   price:33000, dmg:26, rpm:1100,v0:380, eff:22, rv:58, rh:62, erg:60, ads:0.22, stab:62, mag:19, mob:70, pen:2, hd:2.10, pellets:1, ammo:".45"},
+ {id:"mp7",   name:"MP7",      cls:"冲锋枪",   price:30000, dmg:26, rpm:950, v0:720, eff:30, rv:56, rh:60, erg:62, ads:0.22, stab:60, mag:40, mob:70, pen:2, hd:2.15, pellets:1, ammo:"4.6"},
+ {id:"uzi",   name:"UZI Pro",  cls:"冲锋枪",   price:22000, dmg:25, rpm:900, v0:400, eff:20, rv:54, rh:56, erg:64, ads:0.23, stab:54, mag:25, mob:72, pen:1, hd:2.10, pellets:1, ammo:"9mm"},
+ {id:"p90",   name:"P90",      cls:"冲锋枪",   price:36000, dmg:27, rpm:900, v0:700, eff:32, rv:57, rh:60, erg:58, ads:0.23, stab:60, mag:50, mob:68, pen:2, hd:2.15, pellets:1, ammo:"5.7"},
+ {id:"qcq171",name:"QCQ171",   cls:"冲锋枪",   price:34000, dmg:27, rpm:1000,v0:500, eff:26, rv:55, rh:58, erg:56, ads:0.24, stab:58, mag:50, mob:66, pen:2, hd:2.15, pellets:1, ammo:"9mm"},
+ {id:"sr25",  name:"SR-25",    cls:"精准射手", price:88000, dmg:60, rpm:300, v0:800, eff:80, rv:38, rh:52, erg:34, ads:0.40, stab:60, mag:20, mob:44, pen:6, hd:2.80, pellets:1, ammo:"7.62H"},
+ {id:"mini14",name:"Mini-14",  cls:"精准射手", price:66000, dmg:55, rpm:340, v0:990, eff:75, rv:42, rh:56, erg:40, ads:0.36, stab:56, mag:20, mob:50, pen:5, hd:2.70, pellets:1, ammo:"5.56"},
+ {id:"m700",  name:"M700",     cls:"狙击枪",   price:96000, dmg:95, rpm:50,  v0:1000,eff:110,rv:30, rh:60, erg:28, ads:0.55, stab:66, mag:5,  mob:42, pen:6, hd:3.20, pellets:1, ammo:".308", bolt:true},
+ {id:"awm",   name:"AWM",      cls:"狙击枪",   price:158000,dmg:105,rpm:45,  v0:1100,eff:130,rv:28, rh:62, erg:26, ads:0.60, stab:70, mag:5,  mob:40, pen:7, hd:3.30, pellets:1, ammo:".338", bolt:true},
+ {id:"m870",  name:"M870",     cls:"霰弹枪",   price:18000, dmg:12, rpm:70,  v0:400, eff:12, rv:34, rh:50, erg:44, ads:0.30, stab:50, mag:5,  mob:58, pen:1, hd:2.00, pellets:8, ammo:"12G", spread:5.5},
+ {id:"s12k",  name:"S12K",     cls:"霰弹枪",   price:29000, dmg:10, rpm:240, v0:380, eff:12, rv:36, rh:52, erg:42, ads:0.31, stab:52, mag:10, mob:56, pen:1, hd:2.00, pellets:8, ammo:"12G", spread:6.0, semi:true},
+ {id:"m249",  name:"M249",     cls:"轻机枪",   price:92000, dmg:45, rpm:850, v0:900, eff:50, rv:44, rh:46, erg:24, ads:0.46, stab:48, mag:200,mob:36, pen:4, hd:2.40, pellets:1, ammo:"5.56"},
+ {id:"pkm",   name:"PKM",      cls:"轻机枪",   price:104000,dmg:52, rpm:650, v0:825, eff:55, rv:40, rh:44, erg:20, ads:0.50, stab:52, mag:100,mob:32, pen:5, hd:2.50, pellets:1, ammo:"7.62"},
+ {id:"g17",   name:"G17",      cls:"手枪",     price:6800,  dmg:22, rpm:400, v0:380, eff:15, rv:56, rh:60, erg:70, ads:0.18, stab:60, mag:17, mob:78, pen:1, hd:2.00, pellets:1, ammo:"9mm", semi:true},
+];
+
+/* ---------- 配件数据 ---------- */
+/* mods: 键=属性 字段名; 百分比类: ads/换弹 用 pct; 兼容: any(全部)/cls 列表 */
+const SLOTS = [
+ {id:"muzzle", name:"枪口"},
+ {id:"barrel", name:"枪管"},
+ {id:"handguard", name:"护木"},
+ {id:"grip", name:"握把"},
+ {id:"mag", name:"弹匣"},
+ {id:"stock", name:"枪托"},
+ {id:"sight", name:"瞄具"},
+ {id:"laser", name:"侧导轨"},
+];
+const ATTACHMENTS = [
+ /* 枪口 */
+ {slot:"muzzle", name:"无", price:0, mods:{}, def:true},
+ {slot:"muzzle", name:"TMP 猎鹰消音器", price:9800, mods:{rv:3, rh:2, erg:-3}, note:"消音"},
+ {slot:"muzzle", name:"兵工厂制退器", price:6400, mods:{rv:6, rh:4, erg:-2}},
+ {slot:"muzzle", name:"TB-4 消焰器", price:4200, mods:{rv:2, rh:2}},
+ {slot:"muzzle", name:"集束器", price:7600, mods:{rv:5, v0:30, eff:4}},
+ {slot:"muzzle", name:"精密枪口装置", price:11800, mods:{rv:4, rh:5, v0:15, erg:-1}},
+ /* 枪管 */
+ {slot:"barrel", name:"原厂枪管", price:0, mods:{}, def:true},
+ {slot:"barrel", name:"轻型枪管", price:7200, mods:{mob:3, erg:3, rh:-2, v0:-20, eff:-3}},
+ {slot:"barrel", name:"重型枪管", price:8600, mods:{rv:5, rh:3, v0:30, eff:5, mob:-3}},
+ {slot:"barrel", name:"加长枪管", price:10800, mods:{v0:55, eff:12, mob:-5, erg:-2}},
+ {slot:"barrel", name:"短突枪管", price:6800, mods:{mob:5, erg:4, v0:-45, eff:-8}},
+ /* 护木 */
+ {slot:"handguard", name:"原厂护木", price:0, mods:{}, def:true},
+ {slot:"handguard", name:"轻量化 M-LOK 护木", price:5400, mods:{erg:5, mob:2}},
+ {slot:"handguard", name:"一体化战术护木", price:8200, mods:{stab:4, erg:2, mob:-1}},
+ {slot:"handguard", name:"浮动式高精度护木", price:12400, mods:{rv:3, stab:5, erg:-2}},
+ /* 握把 */
+ {slot:"grip", name:"无", price:0, mods:{}, def:true},
+ {slot:"grip", name:"TD 垂直握把", price:4600, mods:{rv:8, rh:-2, mob:-1}},
+ {slot:"grip", name:"RKG 直角握把", price:4800, mods:{rh:8, rv:2}},
+ {slot:"grip", name:"轻型握把", price:5200, mods:{ads:-8, erg:4}},
+ {slot:"grip", name:"重型握把", price:7800, mods:{rv:10, stab:3, mob:-2, erg:-2}},
+ {slot:"grip", name:"海绵后握把", price:3600, mods:{rh:5, stab:2}},
+ /* 弹匣 */
+ {slot:"mag", name:"原厂弹匣", price:0, mods:{}, def:true},
+ {slot:"mag", name:"加长弹匣 +10", price:6800, mods:{mag:10, erg:-3}, magAdd:10},
+ {slot:"mag", name:"加长弹匣 +20", price:11400, mods:{mag:20, erg:-5, mob:-2}, magAdd:20},
+ {slot:"mag", name:"快拔弹匣", price:5600, mods:{erg:3, ads:-5}},
+ {slot:"mag", name:"C-MAG 鼓弹匣", price:18600, mods:{mag:70, erg:-8, mob:-5}, magAdd:70},
+ /* 枪托 */
+ {slot:"stock", name:"原厂枪托", price:0, mods:{}, def:true},
+ {slot:"stock", name:"重型战术枪托", price:7600, mods:{rv:6, stab:4, mob:-3}},
+ {slot:"stock", name:"轻型折叠枪托", price:6200, mods:{mob:4, erg:2, rv:2, stab:-2}},
+ {slot:"stock", name:"CQB 短枪托", price:5800, mods:{mob:6, rv:3, erg:2, stab:-3}},
+ {slot:"stock", name:"精准枪托", price:12800, mods:{rv:8, rh:4, stab:6, mob:-5}},
+ /* 瞄具 */
+ {slot:"sight", name:"机瞄", price:0, mods:{}, def:true},
+ {slot:"sight", name:"OS 全息瞄具", price:6200, mods:{ads:-5, stab:2}},
+ {slot:"sight", name:"红点瞄具", price:4800, mods:{ads:-8, erg:2}},
+ {slot:"sight", name:"2倍侧翻瞄镜", price:9600, mods:{eff:6, ads:10, stab:2}},
+ {slot:"sight", name:"4倍瞄镜", price:14800, mods:{eff:16, ads:22, stab:3, erg:-2}},
+ {slot:"sight", name:"6倍狙击镜", price:21600, mods:{eff:28, ads:34, stab:4, erg:-4}},
+ /* 侧导轨 */
+ {slot:"laser", name:"无", price:0, mods:{}, def:true},
+ {slot:"laser", name:"AN/PEQ-15 激光指示器", price:8800, mods:{ads:-6, erg:2}, note:"腰射精度+"},
+ {slot:"laser", name:"双光束激光器", price:11200, mods:{ads:-8, erg:3}, note:"腰射精度++"},
+ {slot:"laser", name:"战术强光灯", price:3200, mods:{stab:2}, note:"照明"},
+];
+
+/* ---------- 属性计算 ---------- */
+const STAT_DEFS = [
+ {k:"dmg",  label:"伤害",        unit:"", max:120},
+ {k:"rpm",  label:"射速",        unit:"RPM", max:1200},
+ {k:"v0",   label:"初速",        unit:"m/s", max:1200},
+ {k:"eff",  label:"有效射程",    unit:"m", max:150},
+ {k:"rv",   label:"垂直后坐控制",unit:"", max:100},
+ {k:"rh",   label:"水平后坐控制",unit:"", max:100},
+ {k:"erg",  label:"人机工效",    unit:"", max:100},
+ {k:"ads",  label:"开镜时间",    unit:"s", max:0.7, inv:true},
+ {k:"stab", label:"稳定性",      unit:"", max:100},
+ {k:"mag",  label:"载弹",        unit:"发", max:270},
+ {k:"mob",  label:"机动",        unit:"", max:100},
+ {k:"pen",  label:"穿透等级",    unit:"级", max:8},
+];
+function calcStats(w, build){
+  // build: {slotId: attachmentObj}
+  const s = {dmg:w.dmg, rpm:w.rpm, v0:w.v0, eff:w.eff, rv:w.rv, rh:w.rh, erg:w.erg, ads:w.ads, stab:w.stab, mag:w.mag, mob:w.mob, pen:w.pen};
+  let hipBonus = 0; // 激光腰射
+  for(const sid in build){
+    const a = build[sid];
+    if(!a) continue;
+    for(const k in a.mods){
+      const v = a.mods[k];
+      if(k === "ads") s.ads = s.ads * (1 + v/100);   // 负值=更快
+      else if(k in s) s[k] += v;
+      else if(k === "hip") hipBonus += v;
+    }
+  }
+  s.ads = Math.max(0.12, s.ads);
+  s.mag = Math.max(1, Math.round(s.mag));
+  s.rv = Math.max(5, s.rv); s.rh = Math.max(5, s.rh);
+  s.erg = Math.max(5, s.erg); s.mob = Math.max(10, s.mob);
+  s.hipBonus = hipBonus;
+  s.price = w.price + Object.values(build).reduce((t,a)=>t+(a?a.price:0),0);
+  return s;
+}
+
+/* ---------- 全局状态 ---------- */
+const state = {
+  weaponId: "m4a1",
+  cat: "全部",
+  curSlot: null,
+  build: {},          // slotId -> attachment (默认项也记录)
+  range: {
+    distIdx: 0, distCustom: 25, useCustom: false,
+    hp: 100, helmet: 0, armor: 0, dmgHint: true,
+    fireMode: "auto", crosshair: "cross",
+  },
+};
+
+/* ---------- 工具 ---------- */
+const $ = s => document.querySelector(s);
+function fmt(n){ return Math.round(n).toLocaleString("en-US"); }
+function sign(n){ return (n>0?"+":"") + (Math.round(n*10)/10); }
+
+/* ---------- 改枪 UI ---------- */
+function renderCats(){
+  const cats = ["全部","突击步枪","冲锋枪","精准射手","狙击枪","霰弹枪","轻机枪","手枪"];
+  $("#gun-cats").innerHTML = cats.map(c=>`<span class="cat ${state.cat===c?'on':''}" data-cat="${c}">${c}</span>`).join("");
+  $("#gun-cats").querySelectorAll(".cat").forEach(el=>el.onclick=()=>{state.cat=el.dataset.cat;renderCats();renderGunList();});
+}
+function renderGunList(){
+  const list = WEAPONS.filter(w=>state.cat==="全部"||w.cls===state.cat);
+  $("#gun-count").textContent = list.length + " 把";
+  $("#gunlist-body").innerHTML = list.map(w=>`
+    <div class="gunrow ${w.id===state.weaponId?'on':''}" data-id="${w.id}">
+      <div><div class="nm">${w.name}</div><div class="sub">${w.ammo} · ${w.dmg}伤 · ${w.rpm}RPM</div></div>
+      <div class="cls">${w.cls}</div>
+    </div>`).join("");
+  $("#gunlist-body").querySelectorAll(".gunrow").forEach(el=>el.onclick=()=>{
+    state.weaponId = el.dataset.id; state.build = {};
+    renderGunList(); renderGun();
+  });
+}
+function attsFor(slot){ return ATTACHMENTS.filter(a=>a.slot===slot); }
+function renderSlots(){
+  const w = WEAPONS.find(x=>x.id===state.weaponId);
+  $("#slots").innerHTML = SLOTS.map(s=>{
+    const a = state.build[s.id];
+    return `<div class="slot ${state.curSlot===s.id?'on':''}" data-slot="${s.id}">
+      <div class="sn">${s.name}</div>
+      <div class="sv ${a?'':'empty'}">${a?a.name:"未选择"}</div>
+    </div>`;
+  }).join("");
+  $("#slots").querySelectorAll(".slot").forEach(el=>el.onclick=()=>{
+    state.curSlot = el.dataset.slot;
+    renderSlots(); renderAttList();
+  });
+}
+function renderAttList(){
+  if(!state.curSlot){ $("#att-title").textContent="选择槽位"; $("#att-list").innerHTML=""; return; }
+  const slot = SLOTS.find(s=>s.id===state.curSlot);
+  const w = WEAPONS.find(x=>x.id===state.weaponId);
+  $("#att-title").textContent = slot.name + " · " + w.name;
+  const cur = state.build[slot.id];
+  $("#att-cur").textContent = "当前: " + (cur?cur.name:"未选择") + (cur&&cur.note?` (${cur.note})`:"");
+  $("#att-list").innerHTML = attsFor(slot.id).map((a,i)=>{
+    const mods = Object.entries(a.mods).map(([k,v])=>{
+      const def = STAT_DEFS.find(d=>d.k===k);
+      const nm = def?def.label:k;
+      const good = k==="ads" ? v<0 : v>0;
+      return `<span class="mod ${good?'up':'dn'}">${nm} ${sign(v)}</span>`;
+    }).join("");
+    return `<div class="attitem ${cur===a?'on':''}" data-i="${i}">
+      <div class="ar"><span class="an">${a.name}${a.note?` <span style="color:var(--pur);font-size:10px">${a.note}</span>`:""}</span><span class="ap">${a.price?"¥"+fmt(a.price):"—"}</span></div>
+      ${mods?`<div class="amods">${mods}</div>`:""}
+    </div>`;
+  }).join("");
+  $("#att-list").querySelectorAll(".attitem").forEach(el=>el.onclick=()=>{
+    const a = attsFor(slot.id)[+el.dataset.i];
+    state.build[slot.id] = a;
+    renderSlots(); renderAttList(); renderStats();
+  });
+}
+function renderStats(){
+  const w = WEAPONS.find(x=>x.id===state.weaponId);
+  const base = calcStats(w, {});
+  const now = calcStats(w, state.build);
+  $("#w-name").textContent = w.name;
+  $("#w-class").textContent = w.cls + " · " + w.ammo + (w.note?(" · "+w.note):"");
+  $("#w-price").textContent = "总价值 ¥" + fmt(now.price);
+  $("#stat-rows").innerHTML = STAT_DEFS.map(d=>{
+    const b = base[d.k], n = now[d.k];
+    const diff = d.k==="ads" ? (b-n) : (n-b);   // 开镜时间：变小为好
+    const pct = d.inv ? Math.max(0, Math.min(100, n/d.max*100))
+                      : Math.max(0, Math.min(100, n/d.max*100));
+    const dfTxt = Math.abs(diff) < 0.001 ? "" :
+      `<span class="df ${diff>0?'up':'dn'}">${sign(diff)}</span>`;
+    return `<div class="srow"><span class="lb">${d.label}</span>
+      <div class="sbar"><i style="width:${pct}%"></i></div>
+      <span class="vl">${d.unit==="s"?n.toFixed(2):fmt(n)}${d.unit&&d.unit!=="s"?" "+d.unit:""}</span>
+      ${dfTxt}</div>`;
+  }).join("");
+}
+function renderGun(){ renderSlots(); renderStats(); renderAttList(); }
+
+/* ---------- 方案保存/分享 ---------- */
+const LS_PRESETS = "df_gunsmith_presets";
+function loadPresets(){ try{return JSON.parse(localStorage.getItem(LS_PRESETS))||[]}catch(e){return[]} }
+function savePresets(p){ localStorage.setItem(LS_PRESETS, JSON.stringify(p)); }
+function renderPresets(){
+  const ps = loadPresets();
+  $("#preset-list").innerHTML = ps.map((p,i)=>`<div class="pitem" data-i="${i}">
+    <span>${p.name} <span style="color:var(--tx3)">· ${p.weapon}</span></span><span class="del" data-del="${i}">删除</span></div>`).join("") || `<div style="font-size:11px;color:var(--tx3)">暂无方案</div>`;
+  $("#preset-list").querySelectorAll(".pitem").forEach(el=>{
+    el.onclick = e=>{
+      if(e.target.dataset.del!==undefined){
+        const ps = loadPresets(); ps.splice(+e.target.dataset.del,1); savePresets(ps); renderPresets(); return;
+      }
+      const p = loadPresets()[+el.dataset.i];
+      state.weaponId = p.weaponId; state.build = p.build;
+      renderGunList(); renderGun();
+    };
+  });
+}
+function encodeBuild(){
+  const w = WEAPONS.find(x=>x.id===state.weaponId);
+  const names = {};
+  for(const sid in state.build){ const a=state.build[sid]; if(a) names[sid]=a.name; }
+  return btoa(unescape(encodeURIComponent(JSON.stringify({w:w.id, a:names}))));
+}
+function decodeBuild(code){
+  const obj = JSON.parse(decodeURIComponent(escape(atob(code.trim()))));
+  const w = WEAPONS.find(x=>x.id===obj.w);
+  if(!w) throw new Error("未知武器");
+  const build = {};
+  for(const sid in obj.a){
+    const a = ATTACHMENTS.find(t=>t.slot===sid && t.name===obj.a[sid]);
+    if(a) build[sid]=a;
+  }
+  return {w, build};
+}
+
+/* ===== 3D 靶场桥接（暴露改枪上下文给模块脚本） ===== */
+window.GS = {
+  $, state, WEAPONS, calcStats, fmt, sign
+};
+function switchPage(id){
+  document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("on", t.dataset.page===id));
+  document.querySelectorAll(".page").forEach(p=>p.classList.toggle("on", p.id===id));
+  window.dispatchEvent(new CustomEvent("pagechange", {detail:id}));
+}
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>switchPage(t.dataset.page));
+$("#btn-torange").onclick = ()=>switchPage("pg-range");
+$("#btn-clear").onclick = ()=>{ state.build={}; renderGun(); };
+$("#btn-save").onclick = ()=>{
+  const name = $("#preset-name").value.trim() || (curWeapon().name + " 方案");
+  const ps = loadPresets();
+  ps.unshift({name, weaponId: state.weaponId, weapon: curWeapon().name, build: state.build, ts: Date.now()});
+  savePresets(ps.slice(0,30)); renderPresets();
+  $("#preset-name").value = "";
+};
+$("#btn-export").onclick = ()=>{ prompt("改装分享码（复制保存）:", encodeBuild()); };
+$("#btn-import").onclick = ()=>{
+  const code = prompt("粘贴改装分享码:");
+  if(!code) return;
+  try{
+    const {w, build} = decodeBuild(code);
+    state.weaponId = w.id; state.build = build;
+    renderGunList(); renderGun();
+  }catch(err){ alert("分享码无效: " + err.message); }
+};
+/* 启动 + 默认演示装配 */
+state.build = {
+  muzzle: ATTACHMENTS.find(a=>a.name==="TMP 猎鹰消音器"),
+  barrel: ATTACHMENTS.find(a=>a.name==="重型枪管"),
+  handguard: ATTACHMENTS.find(a=>a.name==="轻量化 M-LOK 护木"),
+  grip: ATTACHMENTS.find(a=>a.name==="TD 垂直握把"),
+  stock: ATTACHMENTS.find(a=>a.name==="重型战术枪托"),
+  sight: ATTACHMENTS.find(a=>a.name==="OS 全息瞄具"),
+};
+renderCats(); renderGunList(); renderGun(); renderPresets();
+</script>
+<script src="./three.min.js"></script>
+<script src="./keybinds.js"></script>
+<script src="./range3d.js"></script>
+</body>
+</html>

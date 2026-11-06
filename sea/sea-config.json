@@ -1,0 +1,13 @@
+{
+  "main": "sea_server.js",
+  "output": "sea-prep.blob",
+  "disableExperimentalSEAWarning": true,
+  "assets": {
+    "app/index.html": "app/index.html",
+    "app/preload.js": "app/preload.js",
+    "app/range3d.js": "app/range3d.js",
+    "app/keybinds.js": "app/keybinds.js",
+    "app/three.min.js": "app/three.min.js",
+    "assetlist.json": "assetlist.json"
+  }
+}
